@@ -88,7 +88,7 @@ Or directly access the `._variant` readonly attribute.
 msg._variant;
 ```
 
-### Result & Optional
+### Result & Option
 
 `rusty-enum` comes with `Result<T, E>` and `Option<T>`.
 
