@@ -1,4 +1,4 @@
-import { EnumType, enumFactory } from "../src";
+import { EnumType, enumFactory, ifLet, match } from "../src";
 
 interface Message {
   Quit: null,
@@ -68,5 +68,17 @@ describe("Rusty enum", () => {
     expect(quitMsg.isMove()).toBe(false);
     expect(quitMsg.isWrite()).toBe(false);
     expect(quitMsg.isChangeColor()).toBe(false);
+  });
+
+  test("ifLet function", () => {
+    const moveX = ifLet(moveMsg, "Move", ({x}) => x);
+    expect(moveX).toEqual(42);
+    let cbCalled = false; 
+    const moveY = ifLet(quitMsg, "Move", ({y}) => {
+      cbCalled = true; 
+      return y;
+    });
+    expect(moveY).toBeNull();
+    expect(cbCalled).toEqual(false);
   });
 });
