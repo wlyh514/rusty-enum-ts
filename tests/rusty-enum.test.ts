@@ -1,4 +1,4 @@
-import { EnumType, enumFactory, ifLet, match } from "../src";
+import { Enum, EnumPromise, EnumType, asyncMatch, ifLet, intoOptionPromise, intoResultPromise } from "../src";
 
 interface Message {
   Quit: null,
@@ -6,7 +6,7 @@ interface Message {
   Write: string,
   ChangeColor: [number, number, number]
 };
-const Message = enumFactory<Message>();
+const Message = Enum<Message>();
 
 function handleMsg(msg: EnumType<Message>) {
   return msg.match({
@@ -22,6 +22,10 @@ function handleMsgWithDefault(msg: EnumType<Message>) {
     Write: () => "a message is written",
     _: () => "nothing is written",
   });
+}
+
+async function msgPromise(): EnumPromise<Message> {
+  return Message.Move({ x: 42, y: 64 });
 }
 
 describe("Rusty enum", () => {
@@ -71,14 +75,65 @@ describe("Rusty enum", () => {
   });
 
   test("ifLet function", () => {
-    const moveX = ifLet(moveMsg, "Move", ({x}) => x);
+    const moveX = ifLet(moveMsg, "Move", ({ x }) => x);
     expect(moveX).toEqual(42);
-    let cbCalled = false; 
-    const moveY = ifLet(quitMsg, "Move", ({y}) => {
-      cbCalled = true; 
+    let cbCalled = false;
+    const moveY = ifLet(quitMsg, "Move", ({ y }) => {
+      cbCalled = true;
       return y;
     });
     expect(moveY).toBeNull();
     expect(cbCalled).toEqual(false);
+  });
+
+  test("async match", async () => {
+    const moveMsgPromise = msgPromise();
+    const x = await asyncMatch(moveMsgPromise, {
+      Move({ x }) {
+        return x;
+      },
+      _: () => 0
+    });
+
+    expect(x).toEqual(42);
+  });
+
+  describe("async result", () => {
+    test("resolve", async () => {
+      const resolvePromise: Promise<number> = new Promise((res, _) => res(42));
+      const resolveResult = await intoResultPromise(resolvePromise);
+      expect(resolveResult._data).toEqual(42);
+      expect(resolveResult._variant).toEqual("Ok");
+    });
+
+    test("reject without mapping error", async () => {
+      const rejectPromise: Promise<number> = new Promise((_, rej) => rej(42));
+      const rejectResult = await intoResultPromise(rejectPromise);
+      expect(rejectResult._data).toEqual(42);
+      expect(rejectResult._variant).toEqual("Err");
+    });
+
+    test("reject with error mapped", async () => {
+      const rejectPromise: Promise<number> = new Promise((_, rej) => rej(42));
+      const rejectResult = await intoResultPromise<number, string>(rejectPromise, (err) => err.toString());
+      expect(rejectResult._data).toEqual("42");
+      expect(rejectResult._variant).toEqual("Err");
+    })
+  });
+
+  describe("async option", () => {
+    test("reject", async () => {
+      const resolvePromise: Promise<number> = new Promise((_, rej) => rej(42));
+      const resolveOption = await intoOptionPromise(resolvePromise);
+      expect(resolveOption._data).toBeUndefined();
+      expect(resolveOption._variant).toEqual("None");
+    });
+
+    test("resolve", async () => {
+      const rejectPromise: Promise<number> = new Promise((res, _) => res(42));
+      const rejectOption = await intoOptionPromise(rejectPromise);
+      expect(rejectOption._data).toEqual(42);
+      expect(rejectOption._variant).toEqual("Some");
+    });
   });
 });

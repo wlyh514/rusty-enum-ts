@@ -1,0 +1,11 @@
+import { EnumType, HandlerFns, HandlerFnsWithDefault, Schema } from "./core";
+import { Option, Result } from "./enums";
+type EnumPromise<S extends Schema, V extends keyof S = keyof S> = Promise<EnumType<S, V>>;
+declare function asyncMatch<S extends Schema, R>(enumPromise: EnumPromise<S, any>, handlerFns: HandlerFns<S, R> | HandlerFnsWithDefault<S, R>): Promise<R>;
+type ResultPromise<T, E, V extends keyof Result<T, E> = keyof Result<T, E>> = EnumPromise<Result<T, E>, V>;
+type OptionPromise<T, V extends keyof Option<T> = keyof Option<T>> = EnumPromise<Option<T>, V>;
+declare function intoOptionPromise<T>(promise: Promise<T>): OptionPromise<T>;
+declare function intoResultPromise<T, E>(promise: Promise<T>, mapErr: (err: any) => E): ResultPromise<T, E>;
+declare function intoResultPromise<T>(promise: Promise<T>): ResultPromise<T, any>;
+export { asyncMatch, intoOptionPromise, intoResultPromise };
+export type { EnumPromise, ResultPromise, OptionPromise };

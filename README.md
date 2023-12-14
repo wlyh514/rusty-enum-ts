@@ -1,6 +1,6 @@
 # Rusty Enum
 
-A lightweight Rust/Haskell-like enum for Typescript, with some runtime overhead. 
+A lightweight Rust/Haskell-like enum for Typescript, with some runtime overhead.
 
 ## Overview
 
@@ -9,7 +9,7 @@ A lightweight Rust/Haskell-like enum for Typescript, with some runtime overhead.
 ### Defining an Enum
 
 ```typescript
-import {EnumType, enumFactory} from "rusty-enum"; 
+import {EnumType, Enum} from "rusty-enum"; 
 
 /* Define an enum schema as an interface.  */
 interface Message {
@@ -19,7 +19,7 @@ interface Message {
   ChangeColor: [number, number, number]
 };
 /* Acquire a factory for your enum. This returns a global factory instance. */
-const Message = enumFactory<Message>();
+const Message = Enum<Message>();
 
 ```
 
@@ -32,13 +32,20 @@ const writeMsg = Message.Write("some text");
 const changeColorMsg = Message.ChangeColor(102, 204, 255);
 ```
 
-### Enum Matching
+### Variant Matching
 
 `rusty-enum` enforces compile-time exhaustive matching. You can either provide matching handlers for every possible variant
 
 ```typescript
 function handleMsg(msg: EnumType<Message>) {
   return msg.match({
+    Move: ({ x, y }) => `moved to (${x}, ${y})`,
+    Write: (s) => `wrote '${s}'`,
+    ChangeColor: (r, g, b) => `color changed to rgb(${r}, ${g}, ${b})`,
+    Quit: () => "someone quit",
+  });
+  // Or equivalently
+  return match(msg, {
     Move: ({ x, y }) => `moved to (${x}, ${y})`,
     Write: (s) => `wrote '${s}'`,
     ChangeColor: (r, g, b) => `color changed to rgb(${r}, ${g}, ${b})`,
@@ -73,7 +80,18 @@ msg.match({
 });
 ```
 
-To determine the variant of an enum without unwrapping its content, use `enum.is${Variant}()`. 
+If you are only interested in a certain variant, you can use the `ifLet` util function.
+
+```typescript
+function ifLet(rustyEnum, variant, cb);
+
+const moveX = ifLet(moveMsg, "Move", ({ x }) => x);
+expect(moveX).toEqual(42);
+```
+
+If `rustyEnum` is of variant `variant`, `cb` is executed with `rustyEnum`'s data, and the return value is returned. Otherwise `null` is returned immediately. 
+
+To determine the variant of an enum without unwrapping its content, use `enum.is${Variant}()`.
 
 ```typescript
 msg.isQuit();
@@ -88,7 +106,7 @@ Or directly access the `._variant` readonly attribute.
 msg._variant;
 ```
 
-### Result & Option
+### Result and Option
 
 `rusty-enum` comes with `Result<T, E>` and `Option<T>`.
 
@@ -106,9 +124,48 @@ function handleQueryResult(res: EnumType<QueryResult>) {
 }
 ```
 
+### Enum in promise and async matching
+
+```typescript
+async function msgPromise(): EnumPromise<Message> {
+  return Message.Move({x: 42, y: 64});
+}
+```
+
+An async function that returns an enum can have its return type as `EnumPromise<S>`, which is short for `Promise<EnumType<S>>`. An `EnumPromise<S>` can be processed by `asyncMatch`.
+
+```typescript
+const moveMsgPromise = msgPromise();
+const x = await asyncMatch(moveMsgPromise, {
+  Move({ x }) {
+    return x;
+  },
+  _: () => 0
+});
+
+expect(x).toEqual(42);
+```
+
+### Converting JS Promises into Enums
+
+A JS `Promise<T>` can be converted into `OptionPromise<T>` or `ResultPromise<T, E>`.
+
+`intoOptionPromise(p: Promise<T>)` return `OptionPromise.Some(T)` if `p` is resolved, or `OptionPromise.None()` if it is rejected.
+
+Similarly, `intoResultPromise(p: Promise<T>)` return `ResultPromise.Ok(T)` if `p` is resolved, or `ResultPromise.Err(err)` if it is rejected, where `err` is the reason of rejection with type `any`.
+
+Additionally, `intoResultPromise` accepts a callback function, where the `any` typed `err` can be mapped into a given error type `E`. 
+
+```typescript
+const rejectPromise: Promise<number> = new Promise((_, rej) => rej(42));
+const rejectResult = await intoResultPromise<number, string>(rejectPromise, (err) => err.toString());
+```
+
+Read more in the library [test script](./tests/rusty-enum.test.ts).
+
 ## Runtime Costs
 
-For creating enum instances, one and only one factory object is created by `rusty-enum`. 
+For creating enum instances, one and only one factory object is created by `rusty-enum`.
 
 ```typescript
 const factoryInstance: Factory<any> = {};
@@ -120,7 +177,7 @@ const factoryProxy = new Proxy(factoryInstance, {
 });
 ```
 
-Every enum instance is proxied to support `.is${Variant}()` methods. 
+Every enum instance is proxied to support `.is${Variant}()` methods.
 
 ```typescript
 function create(...args: any[]) {
@@ -139,7 +196,3 @@ function create(...args: any[]) {
   })
 }
 ```
-
-## Future Improvements
-
-1. Support asynchronous matching and wrapping JS promises into `Result`s.

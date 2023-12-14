@@ -1,55 +1,15 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.intoResultPromise = exports.intoOptionPromise = exports.asyncMatch = exports.ifLet = exports.match = exports.Enum = void 0;
 /**
  * Rust-styled enum in typescript;
  */
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.ifLet = exports.match = exports.enumFactory = void 0;
-function _match(handlerFns) {
-    if (typeof handlerFns[this._variant] !== "undefined") {
-        if (this._data instanceof Array) {
-            return handlerFns[this._variant](...this._data);
-        }
-        else {
-            return handlerFns[this._variant](this._data);
-        }
-    }
-    else {
-        return handlerFns["_"]();
-    }
-}
-function create(...args) {
-    return new Proxy({
-        _variant: args[0],
-        _data: args.length > 2 ? args.slice(1) : args[1],
-        match: _match,
-    }, {
-        get(target, prop, receiver) {
-            const propStr = prop.toString();
-            if (propStr.startsWith("is")) {
-                return () => target._variant === propStr.substring(2);
-            }
-            return Reflect.get(target, prop, receiver);
-        }
-    });
-}
-function enumFactory() {
-    return factoryProxy;
-}
-exports.enumFactory = enumFactory;
-function match(rustyEnum, handlerFns) {
-    return rustyEnum.match(handlerFns);
-}
-exports.match = match;
-function ifLet(rustyEnum, variant, cb) {
-    if (rustyEnum._variant === variant) {
-        return cb(rustyEnum._data);
-    }
-    return null;
-}
-exports.ifLet = ifLet;
-const factoryInstance = {};
-const factoryProxy = new Proxy(factoryInstance, {
-    get(target, prop, receiver) {
-        return (...args) => create(prop, ...args);
-    }
-});
+const core_1 = require("./core");
+Object.defineProperty(exports, "Enum", { enumerable: true, get: function () { return core_1.enumFactory; } });
+const utils_1 = require("./utils");
+Object.defineProperty(exports, "match", { enumerable: true, get: function () { return utils_1.match; } });
+Object.defineProperty(exports, "ifLet", { enumerable: true, get: function () { return utils_1.ifLet; } });
+const async_1 = require("./async");
+Object.defineProperty(exports, "asyncMatch", { enumerable: true, get: function () { return async_1.asyncMatch; } });
+Object.defineProperty(exports, "intoOptionPromise", { enumerable: true, get: function () { return async_1.intoOptionPromise; } });
+Object.defineProperty(exports, "intoResultPromise", { enumerable: true, get: function () { return async_1.intoResultPromise; } });
