@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ifLet = exports.match = void 0;
+exports.enumifyFn = exports.ifLet = exports.match = void 0;
+const core_1 = require("./core");
 function match(rustyEnum, handlerFns) {
     return rustyEnum.match(handlerFns);
 }
@@ -12,3 +13,14 @@ function ifLet(rustyEnum, variant, cb) {
     return null;
 }
 exports.ifLet = ifLet;
+function enumifyFn(fn) {
+    return (...args) => {
+        try {
+            return (0, core_1.enumFactory)().Ok(fn(...args));
+        }
+        catch (e) {
+            return (0, core_1.enumFactory)().Err(e);
+        }
+    };
+}
+exports.enumifyFn = enumifyFn;

@@ -89,7 +89,7 @@ const moveX = ifLet(moveMsg, "Move", ({ x }) => x);
 expect(moveX).toEqual(42);
 ```
 
-If `rustyEnum` is of variant `variant`, `cb` is executed with `rustyEnum`'s data, and the return value is returned. Otherwise `null` is returned immediately. 
+If `rustyEnum` is of variant `variant`, `cb` is executed with `rustyEnum`'s data, and the return value is returned. Otherwise `null` is returned immediately.
 
 To determine the variant of an enum without unwrapping its content, use `enum.is${Variant}()`.
 
@@ -124,7 +124,7 @@ function handleQueryResult(res: EnumType<QueryResult>) {
 }
 ```
 
-### Enum in promise and async matching
+### Enum in Promise and Async Matching
 
 ```typescript
 async function msgPromise(): EnumPromise<Message> {
@@ -154,7 +154,7 @@ A JS `Promise<T>` can be converted into `OptionPromise<T>` or `ResultPromise<T, 
 
 Similarly, `intoResultPromise(p: Promise<T>)` return `ResultPromise.Ok(T)` if `p` is resolved, or `ResultPromise.Err(err)` if it is rejected, where `err` is the reason of rejection with type `any`.
 
-Additionally, `intoResultPromise` accepts a callback function, where the `any` typed `err` can be mapped into a given error type `E`. 
+Additionally, `intoResultPromise` accepts a callback function, where the `any` typed `err` can be mapped into a given error type `E`.
 
 ```typescript
 const rejectPromise: Promise<number> = new Promise((_, rej) => rej(42));
@@ -162,6 +162,30 @@ const rejectResult = await intoResultPromise<number, string>(rejectPromise, (err
 ```
 
 Read more in the library [test script](./tests/rusty-enum.test.ts).
+
+### Converting Error-Throwing Functions into Result-Returning Functions
+
+```typescript
+function foo(arg: number) {
+  if (isNaN(arg)) {
+    throw "Sample error string";
+  } else {
+    return 42;
+  }
+}
+const enumifiedFoo = enumifyFn<string, typeof foo>(foo);
+// OR
+const enumifiedFoo = enumifyFn(foo); // returns Result<number, unknown>
+
+enumifiedFoo(43).match({
+  Ok(res) {
+    ...
+  },
+  Err(err) {
+    ...
+  }
+})
+```
 
 ## Runtime Costs
 

@@ -1,4 +1,5 @@
 import { Enum, EnumPromise, EnumType, asyncMatch, ifLet, intoOptionPromise, intoResultPromise } from "../src";
+import { enumifyFn } from "../src/utils";
 
 interface Message {
   Quit: null,
@@ -134,6 +135,44 @@ describe("Rusty enum", () => {
       const rejectOption = await intoOptionPromise(rejectPromise);
       expect(rejectOption._data).toEqual(42);
       expect(rejectOption._variant).toEqual("Some");
+    });
+  });
+
+  describe('enumify function', () => { 
+
+    function foo(arg: number) {
+      if (isNaN(arg)) {
+        throw "Sample error string";
+      } else {
+        return 42;
+      }
+    }
+    const enumifiedFoo = enumifyFn<string, typeof foo>(foo);
+
+    test("return Ok(foo()) by default", () => {
+      const res = enumifiedFoo(42);
+      res.match({
+        Ok(p) {
+          expect(true);
+          expect(p).toEqual(42);
+        },
+        Err(p) {
+          expect(false);
+        },
+      })
+    });
+
+    test("return Error(error thrown by foo()) upon error", () => {
+      const res = enumifiedFoo(NaN);
+      res.match({
+        Ok(p) {
+          expect(false);
+        },
+        Err(p) {
+          expect(true);
+          expect(p).toEqual("Sample error string");
+        },
+      })
     });
   });
 });
