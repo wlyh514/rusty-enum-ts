@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.intoResultPromise = exports.intoOptionPromise = exports.asyncMatch = exports.ifLet = exports.match = exports.Enum = void 0;
+exports.enumifyFn = exports.intoResultPromise = exports.intoOptionPromise = exports.asyncMatch = exports.ifLet = exports.match = exports.Enum = void 0;
 /**
  * Rust-styled enum in typescript;
  */
@@ -9,6 +9,7 @@ Object.defineProperty(exports, "Enum", { enumerable: true, get: function () { re
 const utils_1 = require("./utils");
 Object.defineProperty(exports, "match", { enumerable: true, get: function () { return utils_1.match; } });
 Object.defineProperty(exports, "ifLet", { enumerable: true, get: function () { return utils_1.ifLet; } });
+Object.defineProperty(exports, "enumifyFn", { enumerable: true, get: function () { return utils_1.enumifyFn; } });
 const async_1 = require("./async");
 Object.defineProperty(exports, "asyncMatch", { enumerable: true, get: function () { return async_1.asyncMatch; } });
 Object.defineProperty(exports, "intoOptionPromise", { enumerable: true, get: function () { return async_1.intoOptionPromise; } });
